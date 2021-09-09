@@ -449,12 +449,12 @@ def plot_scatter(X_ng_new, mapped_df, y_predict_ng_wards):
               "Clustering using Ward's method scatter plot")
     plt.scatter(X_ng_new[:, 0], X_ng_new[:, 1], c=y_predict_ng_wards)
     plt.tick_params(
-    which='both',      # both major and minor ticks are affected
-    bottom=False,      # ticks along the bottom edge are off
-    left=False,      # ticks along the bottom edge are off
-    top=False,         # ticks along the top edge are off
-    labelbottom=False,
-    labelleft=False,)  # labels along the bottom edge are off
+        which='both',      # both major and minor ticks are affected
+        bottom=False,      # ticks along the bottom edge are off
+        left=False,      # ticks along the bottom edge are off
+        top=False,         # ticks along the top edge are off
+        labelbottom=False,
+        labelleft=False,)  # labels along the bottom edge are off
 
     plt.show()
 
@@ -464,10 +464,12 @@ def plot_scatter(X_ng_new, mapped_df, y_predict_ng_wards):
 
     return mapped_df_wards
 
+
 def cluster_wordcloud(sc_labor, mapped_df_wards, cluster, color):
     df_bow = pd.DataFrame(sc_labor.bow_ng.toarray(
     ), columns=sc_labor.tfidf_vectorizer.get_feature_names())
-    c1_idx_w = mapped_df_wards[mapped_df_wards.y_predict == 1].index.tolist()
+    c1_idx_w = mapped_df_wards[mapped_df_wards.y_predict ==
+                               cluster].index.tolist()
 
     c1_bow_w = df_bow.loc[c1_idx_w].sum(axis=0)
     c1_bow_w = c1_bow_w[c1_bow_w > 0]
@@ -479,7 +481,7 @@ def cluster_wordcloud(sc_labor, mapped_df_wards, cluster, color):
                                background_color=None,
                                min_font_size=16,
                                max_words=150,
-                               color_func=lambda *args, **kwargs: "black"
+                               color_func=lambda *args, **kwargs: color
                                )\
         .generate_from_frequencies(c1_bow_w)
     return c1_wordcloud_w
