@@ -1,3 +1,4 @@
+from collections import Counter
 import re
 from wordcloud import WordCloud
 from sklearn.cluster import AgglomerativeClustering
@@ -37,15 +38,48 @@ def get_cases_from_pkl(path, pattern_filter):
     return dfdata_labor
 
 
-# path = './cases'
+path = '/Users/brian/Documents/dmw_final/cases'
 # pattern_filter = '(?i).*(family code|inter[-]?country adoption|domeI stic adoption).*'
-# # pattern_filter = '(?i).*(labor code).*'
-# df_labor = get_cases_from_pkl(path, pattern_filter)
-# df_labor.head()
+pattern_filter = r'(?i).*labor code of the philippines.*'
+df_labor = get_cases_from_pkl(path, pattern_filter)
+df_labor.head()
+
+
+outcols = ['Date of decision', 'Case number', 'Case title', 'Deciding division',
+           'Ponente', 'Body', 'Provision(s) cited', 'Case URL']
+test_df = df_labor.loc[:, ['date_yyyymmdd', 'body']]
+exp_str = (r'(?i)((?:article \d+| art. \d+| art \d+|section'
+           ' \d+| sec. \d+| sec \d+)(?:\s*of\s*the\s*labor\s*code))')
+exp_str2 = (r'(?i)((?:labor code,? ?)(?:article \d+|'
+            ' art. \d+| art \d+|section \d+| sec. \d+| sec \d+))')
+
+provisions = []
+for i, r in test_df[['date_yyyymmdd', 'body']].iterrows():
+    year = r['date_yyyymmdd'].year
+    if year > 2015:
+        tag = 'New'
+    else:
+        tag = 'Old'
+    f = re.findall(exp_str, r['body'])
+    f2 = re.findall(exp_str2, r['body'])
+    all_f = f + f2
+    provisions.append(Counter(['{tag} Article {prov}' .format(tag=tag,
+                                prov=re.findall(r'\d+', x)[0]) for x in all_f]))
+
+df_labor['prov'] = provisions
+
+incols = ['date_yyyymmdd','case no','case title','division','ponente','body','prov','url']
+
+
+
+df_labor_out = df_labor.rename(columns=dict(zip(incols,outcols)))[outcols]
+
 
 
 # df_labor = df_labor[df_labor['case no'].str.contains('g.r.')].reset_index(drop=True)
 # df_labor.head()
+
+df_labor_out.to_pickle('df_labor_new.pkl')
 
 
 def figure1(df_labor):
