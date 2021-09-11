@@ -15,76 +15,10 @@ from scipy.cluster.hierarchy import linkage, dendrogram
 import scipy.cluster.hierarchy as sch
 
 
-def get_cases_from_pkl(path, pattern_filter):
-    out = []
-    for f in Path(path).glob('**/*.pkl'):
-        df = pd.read_pickle(f)
-        # Do Something
-
-        df['body'] = df['body'].str.replace(
-            r'\\(.)', r' ', regex=True).str.strip()
-        df['footnote'] = df['footnote'].str.replace(
-            r'\\(.)', r' ', regex=True).str.strip()
-        df['dispositive portion'] = df['dispositive portion'].str.replace(
-            r'\\(.)', r' ', regex=True).str.strip()
-        df['ponente'] = df['ponente'].str.replace(
-            r':', r'', regex=True).str.strip()
-        dfout = df[df['body'].str.match(pattern_filter)]
-
-        if dfout.shape[0] > 0:
-            out.append(dfout)
-
-    dfdata_labor = pd.concat(out).reset_index(drop=True)
-    return dfdata_labor
-
-
-path = '/Users/brian/Documents/dmw_final/cases'
-# pattern_filter = '(?i).*(family code|inter[-]?country adoption|domeI stic adoption).*'
-pattern_filter = r'(?i).*labor code of the philippines.*'
-df_labor = get_cases_from_pkl(path, pattern_filter)
-df_labor.head()
-
-
-outcols = ['Date of decision', 'Case number', 'Case title', 'Deciding division',
-           'Ponente', 'Body', 'Provision(s) cited', 'Case URL']
-test_df = df_labor.loc[:, ['date_yyyymmdd', 'body']]
-exp_str = (r'(?i)((?:article \d+| art. \d+| art \d+|section'
-           ' \d+| sec. \d+| sec \d+)(?:\s*of\s*the\s*labor\s*code))')
-exp_str2 = (r'(?i)((?:labor code,? ?)(?:article \d+|'
-            ' art. \d+| art \d+|section \d+| sec. \d+| sec \d+))')
-
-provisions = []
-for i, r in test_df[['date_yyyymmdd', 'body']].iterrows():
-    year = r['date_yyyymmdd'].year
-    if year > 2015:
-        tag = 'New'
-    else:
-        tag = 'Old'
-    f = re.findall(exp_str, r['body'])
-    f2 = re.findall(exp_str2, r['body'])
-    all_f = f + f2
-    provisions.append(Counter(['{tag} Article {prov}' .format(tag=tag,
-                                prov=re.findall(r'\d+', x)[0]) for x in all_f]))
-
-df_labor['prov'] = provisions
-
-incols = ['date_yyyymmdd','case no','case title','division','ponente','body','prov','url']
-
-
-
-df_labor_out = df_labor.rename(columns=dict(zip(incols,outcols)))[outcols]
-
-
-
-# df_labor = df_labor[df_labor['case no'].str.contains('g.r.')].reset_index(drop=True)
-# df_labor.head()
-
-df_labor_out.to_pickle('df_labor_new.pkl')
-
-
 def figure1(df_labor):
-    df_labor["year"] = df_labor["date_yyyymmdd"].dt.year
-    year_count_df = pd.DataFrame(df_labor["year"].value_counts()).reset_index()\
+    df_labor["year"] = df_labor["Date of decision"].dt.year
+    year_count_df = pd.DataFrame(df_labor["year"].value_counts())\
+        .reset_index()\
         .rename({"index": "year", "year": "counts"}, axis=1)
 
     bar_colors = '#5F9EA0'
@@ -113,10 +47,11 @@ def figure1(df_labor):
 
 
 def figure2(df_labor):
-    df_donut = pd.DataFrame(df_labor["division"].value_counts()).reset_index()
+    df_donut = pd.DataFrame(df_labor["Deciding division"].value_counts()).\
+        reset_index()
     df_donut.rename({
         "index": "division_",
-        "division": "counts"
+        "Deciding division": "counts"
     },
         axis=1,
         inplace=True)
@@ -170,7 +105,7 @@ def figure2(df_labor):
 #     fig3.show()
 
 def figure3(df_labor):
-    df = df_labor.provision.apply(pd.Series).count(
+    df = df_labor['Provision(s) cited'].apply(pd.Series).count(
         axis=0).to_frame().reset_index()
     df.rename(columns={"index": 'article', 0: 'Count'}, inplace=True)
 
@@ -189,10 +124,10 @@ def figure3(df_labor):
                  y='article',
                  color_discrete_sequence=[bar_colors])
 
-    fig.update_xaxes(title_text=None)
+    fig.update_xaxes(title_text=None,visible=False)
     fig.update_yaxes(title_text=None)
     fig.update_layout(title={
-        'text': ('Top 20 Mentioned Articles and Sections'),
+        'text': ('Top 20 Cited Labor Code Provisions'),
         'y': 0.95,
         'x': 0.5,
         'xanchor': 'center',
@@ -205,6 +140,7 @@ def figure3(df_labor):
     })
 
     fig.show()
+    
 
 
 en_stopwords = ['br', 'the', 'i', 'my', 'we', 'our', 'ours', 'ourselves',
@@ -227,10 +163,12 @@ en_stopwords = ['br', 'the', 'i', 'my', 'we', 'our', 'ours', 'ourselves',
                 "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren',
                 "weren't", 'won', "won't", 'wouldn', "wouldn't", "do", "does",
                 'in', 'on', 'for', 'of',
-                'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'sept',
-                'oct', 'nov', 'dec', 'january', 'february', 'march', 'april', 'june', 'july',
+                'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep',
+                'sept', 'oct', 'nov', 'dec', 'january', 'february', 'march',
+                'april', 'june', 'july',
                 'august', 'september', 'october', 'november', 'december',
-                'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+                'monday', 'tuesday', 'wednesday', 'thursday', 'friday',
+                'saturday', 'sunday',
                 'clock']
 
 ph_legal_stop_words = ['private respondent', 'respondent', 'respondents',
@@ -293,7 +231,7 @@ class Lab4:
         """
         self.stopwords = set(en_stopwords + ph_legal_stop_words + stop_words)
         self.df = df
-        self.tfidf_vectorizer, self.bow_ng = self.tfidf_wordcloud(df)
+        self.tfidf_vectorizer, self.bow_ng = self.get_tfidf(df)
 
     def display_ve(self):
         """Display variance explained by running svd_plot_varex."""
@@ -374,8 +312,8 @@ class Lab4:
         """Return project_svd of based on k."""
         return q[:, :k] @ s[:k, :k]
 
-    def tfidf_wordcloud(self, df, ngram_up=3):
-        """Create WorldCloud and return Tfid vectorized arrays.
+    def get_tfidf(self, df, ngram_up=3):
+        """Return Tfid vectorized arrays.
 
         Parameters
         ----------
