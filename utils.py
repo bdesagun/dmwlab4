@@ -388,7 +388,7 @@ class Lab4:
         plt.show()
 
 
-def plot_dendogram(Z, best_t=0):
+def plot_dendrogram(Z, best_t=0):
     """Return a truncated dendrogram plot."""
     fig, ax = plt.subplots(figsize=(15, 10))
     dendrogram = sch.dendrogram(
@@ -397,7 +397,7 @@ def plot_dendogram(Z, best_t=0):
     if best_t > 0:
         plt.axhline(best_t, linestyle='--', color='gray')
     plt.title("Labor related Supreme Court decisions "
-              "Clustering using Ward's method dendogram plot")
+              "Clustering using Ward's method dendrogram plot")
     plt.tick_params(
         axis='x',          # changes apply to the x-axis
         which='both',      # both major and minor ticks are affected
