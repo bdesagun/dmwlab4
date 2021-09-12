@@ -16,6 +16,12 @@ import scipy.cluster.hierarchy as sch
 
 
 def figure1(df_labor):
+    """Display figure1 for Lab4 report.
+    
+    Parameters
+    ----------
+    df_labor : pd.DataFrame
+    """
     df_labor["year"] = df_labor["Date of decision"].dt.year
     year_count_df = pd.DataFrame(df_labor["year"].value_counts())\
         .reset_index()\
@@ -47,6 +53,12 @@ def figure1(df_labor):
 
 
 def figure2(df_labor):
+    """Display figure2 for Lab4 report.
+    
+    Parameters
+    ----------
+    df_labor : pd.DataFrame
+    """
     df_donut = pd.DataFrame(df_labor["Deciding division"].value_counts()).\
         reset_index()
     df_donut.rename({
@@ -78,33 +90,14 @@ def figure2(df_labor):
     fig2.show()
 
 
-# def figure3(df_labor):
-#     law = df_labor.law.apply(pd.Series).count(axis=0).to_frame()
-#     law = (law.reset_index().rename(columns={'index': 'law', 0: 'count'}))
-#     bar_colors = '#5F9EA0'
-#     fig3 = px.bar(law.sort_values(by='count', ascending=True),
-#                   x='count',
-#                   y='law',
-#                   color_discrete_sequence=[bar_colors])
-
-#     fig3.update_xaxes(title_text=None)
-#     fig3.update_yaxes(title_text=None)
-#     fig3.update_layout(title={
-#         'text': ('Covered Philippine Laws'),
-#         'y': 0.95,
-#         'x': 0.5,
-#         'xanchor': 'center',
-#         'yanchor': 'top'
-#     },
-#                        showlegend=False)
-#     fig3.update_layout({
-#         'plot_bgcolor': 'rgba(0, 0, 0, 0)',
-#         'paper_bgcolor': 'rgba(0, 0, 0, 0)'
-#     })
-
-#     fig3.show()
 
 def figure3(df_labor):
+    """Display figure3 for Lab4 report.
+    
+    Parameters
+    ----------
+    df_labor : pd.DataFrame
+    """
     df = df_labor['Provision(s) cited'].apply(pd.Series).count(
         axis=0).to_frame().reset_index()
     df.rename(columns={"index": 'article', 0: 'Count'}, inplace=True)
@@ -231,16 +224,16 @@ class Lab4:
         """
         self.stopwords = set(en_stopwords + ph_legal_stop_words + stop_words)
         self.df = df
-        self.tfidf_vectorizer, self.bow_ng = self.get_tfidf(df)
+        self.tfidf_vectorizer, self.bow_lc = self.get_tfidf(df)
 
     def display_ve(self):
         """Display variance explained by running svd_plot_varex."""
-        q_ng, s_ng, self.p_ng, nssd_ng, self.idx_90 = self.svd_plot_varex(
-            self.bow_ng)
+        q_lc, s_lc, self.p_lc, nssd_lc, self.idx_90 = self.svd_plot_varex(
+            self.bow_lc)
 
     def display_lsa(self):
         """Display LSA charts by running plot_lsa."""
-        self.plot_lsa(self.tfidf_vectorizer, self.p_ng)
+        self.plot_lsa(self.tfidf_vectorizer, self.p_lc)
 
     def get_wordcloud(self):
         """
@@ -341,31 +334,31 @@ class Lab4:
                                            min_df=5,
                                            #                                               strip_accent='ascii'
                                            max_df=.8)
-        bow_ng = tfidf_vectorizer.fit_transform(data)
-        return tfidf_vectorizer, bow_ng
+        bow_lc = tfidf_vectorizer.fit_transform(data)
+        return tfidf_vectorizer, bow_lc
 
-    def svd_plot_varex(self, bow_ng):
+    def svd_plot_varex(self, bow_lc):
         """Plot variable explain and return truncated svd.
 
         Parameters
         ----------
-        bow_ng : np.ndarray
+        bow_lc : np.ndarray
 
         Returns
         -------
         truncated_svd
         """
-        q_ng, s_ng, p_ng, nssd_ng = self.truncated_svd(bow_ng.toarray())
+        q_lc, s_lc, p_lc, nssd_lc = self.truncated_svd(bow_lc.toarray())
         fig, ax = plt.subplots(figsize=(8, 6))
-        ax.plot(range(1, len(nssd_ng) + 1), nssd_ng, '-', label='individual',
+        ax.plot(range(1, len(nssd_lc) + 1), nssd_lc, '-', label='individual',
                 color='#FF5A5F')
-        ax.set_xlim(0, len(nssd_ng) + 1)
+        ax.set_xlim(0, len(nssd_lc) + 1)
         ax.set_xlabel('SV')
         ax.set_ylabel('variance explained')
         ax = ax.twinx()
-        ax.plot(range(1, len(nssd_ng) + 1),
-                nssd_ng.cumsum(), 'o-', label='cumulative', color='#5F9EA0')
-        ve_cumsum = nssd_ng.cumsum()
+        ax.plot(range(1, len(nssd_lc) + 1),
+                nssd_lc.cumsum(), 'o-', label='cumulative', color='#5F9EA0')
+        ve_cumsum = nssd_lc.cumsum()
         idx_90 = ve_cumsum[ve_cumsum < .9].shape[0]
         ax.axhline(0.9, ls='--', color='#484848')
         ax.axvline(idx_90, ls='--', color='#484848')
@@ -373,21 +366,21 @@ class Lab4:
         plt.title('Variance Explained per SV\n'
                   f'90% Threshold at SV {idx_90}')
         plt.show()
-        return q_ng, s_ng, p_ng, nssd_ng, idx_90
+        return q_lc, s_lc, p_lc, nssd_lc, idx_90
 
-    def plot_lsa(self, tfidf_vectorizer, p_ng):
+    def plot_lsa(self, tfidf_vectorizer, p_lc):
         """Plot LSA from truncated svd.
 
         Parameters
         ----------
         tfidf_vectorizer : TfidfVectorizer
-        n_ng : np.ndarray
+        n_lc : np.ndarray
         """
         feature_names = tfidf_vectorizer.get_feature_names()
         fig, ax = plt.subplots(2, 2, figsize=(15, 10))
         for i, sub_ax in enumerate(fig.axes):
-            order = np.argsort(np.abs(p_ng[:, i]))[-10:]
-            sub_ax.barh([feature_names[o] for o in order], p_ng[order, i],
+            order = np.argsort(np.abs(p_lc[:, i]))[-10:]
+            sub_ax.barh([feature_names[o] for o in order], p_lc[order, i],
                         color='#5F9EA0')
             sub_ax.set_title(f'SV{i+1}')
         plt.subplots_adjust(wspace=0.5)
@@ -414,12 +407,26 @@ def plot_dendogram(Z, best_t=0):
     plt.show()
 
 
-def plot_scatter(X_ng_new, mapped_df, y_predict_ng_wards):
-    """Return a truncated scatter plot."""
+def plot_scatter(X_lc_new, df_combined, y_predict_lc_wards):
+    """Return a truncated scatter plot.
+    
+    Parameters
+    ----------
+    X_lc_new : np.ndarray
+        Truncated SVD
+    df_combined : pd.DataFrame
+        Labor Dataframe
+    y_predict_lc_wards : np.ndarray
+        Wards Clustering labels
+
+    Returns
+    -------
+    df_combined_wards
+    """
     fig = plt.figure(figsize=(8, 6))
     plt.title("Labor related Supreme Court decisions "
               "Clustering using Ward's method scatter plot")
-    plt.scatter(X_ng_new[:, 0], X_ng_new[:, 1], c=y_predict_ng_wards)
+    plt.scatter(X_lc_new[:, 0], X_lc_new[:, 1], c=y_predict_lc_wards)
     plt.tick_params(
         which='both',      # both major and minor ticks are affected
         bottom=False,      # ticks along the bottom edge are off
@@ -430,23 +437,24 @@ def plot_scatter(X_ng_new, mapped_df, y_predict_ng_wards):
 
     plt.show()
 
-    mapped_df_wards = pd.merge(mapped_df, pd.Series(
-        y_predict_ng_wards, name='y_predict'), left_index=True,
+    df_combined_wards = pd.merge(df_combined, pd.Series(
+        y_predict_lc_wards, name='y_predict'), left_index=True,
         right_index=True)
 
-    return mapped_df_wards
+    return df_combined_wards
 
 
-def cluster_wordcloud(sc_labor, mapped_df_wards, cluster, color):
-    df_bow = pd.DataFrame(sc_labor.bow_ng.toarray(
+def cluster_wordcloud(sc_labor, df_combined_wards, cluster, color):
+    """Return a worldcloud instance base on cluster result."""
+    df_bow = pd.DataFrame(sc_labor.bow_lc.toarray(
     ), columns=sc_labor.tfidf_vectorizer.get_feature_names())
-    c1_idx_w = mapped_df_wards[mapped_df_wards.y_predict ==
+    c_idx_w = df_combined_wards[df_combined_wards.y_predict ==
                                cluster].index.tolist()
 
-    c1_bow_w = df_bow.loc[c1_idx_w].sum(axis=0)
-    c1_bow_w = c1_bow_w[c1_bow_w > 0]
+    c_bow_w = df_bow.loc[c_idx_w].sum(axis=0)
+    c_bow_w = c_bow_w[c_bow_w > 0]
 
-    c1_wordcloud_w = WordCloud(width=1000,
+    c_wordcloud_w = WordCloud(width=1000,
                                height=1000,
                                mode='RGBA',
                                colormap=None,
@@ -455,5 +463,5 @@ def cluster_wordcloud(sc_labor, mapped_df_wards, cluster, color):
                                max_words=150,
                                color_func=lambda *args, **kwargs: color
                                )\
-        .generate_from_frequencies(c1_bow_w)
-    return c1_wordcloud_w
+        .generate_from_frequencies(c_bow_w)
+    return c_wordcloud_w
