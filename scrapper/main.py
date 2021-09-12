@@ -3,14 +3,14 @@ from pathlib import Path
 from collections import Counter
 import datetime
 from bs4 import BeautifulSoup
-import MySQLdb
+
 import pandas as pd
 import re
 from sqlalchemy import exc
 from sqlalchemy import create_engine
 import pymysql
 pymysql.install_as_MySQLdb()
-
+import MySQLdb
 
 def to_df_flg(url):
     server = 'scdecsisions.cvd0q1suowjz.ap-southeast-1.rds.amazonaws.com'
@@ -234,6 +234,26 @@ for i, r in df_cases.iterrows():
     to_df_flg(url)
     ctr += 1
 
+
+
+
+
+query = '''
+select year(date) as year, count(*) as cases
+from cases
+group by 1
+having count(*) > 1
+'''
+engine = create_engine(
+    f"mysql+mysqldb://{account}:{password}@{server}/{db}?charset=utf8mb4")
+conn = engine.connect().execution_options(autocommit=True)
+
+
+
+df_yearly = pd.read_sql(query,conn)
+df_yearly.to_pickle('../df_yearly.pkl')
+conn.invalidate()
+conn.close()
 # %%
 
 
@@ -298,3 +318,4 @@ def main():
     df_labor_out = df_labor.rename(columns=dict(zip(incols, outcols)))[outcols]
 
     df_labor_out.to_pickle('../df_labor_new.pkl')
+
