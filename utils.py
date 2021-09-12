@@ -15,8 +15,8 @@ from scipy.cluster.hierarchy import linkage, dendrogram
 import scipy.cluster.hierarchy as sch
 
 
-def figure1(df_labor):
-    """Display figure1 for Lab4 report.
+def figure3(df_labor):
+    """Display figure3 for Lab4 report.
     
     Parameters
     ----------
@@ -33,14 +33,14 @@ def figure1(df_labor):
     min_yr = min(year_count_df['year'])
     max_yr = max(year_count_df['year'])    
 
-    fig1 = px.bar(x=year_count_df["year"],
+    fig = px.bar(x=year_count_df["year"],
                   y=year_count_df["counts"],
                   color_discrete_sequence=[bar_colors])
 
-    fig1.update_xaxes(tickangle=-30, tickmode='linear', title_text=None)
-    fig1.update_yaxes(title_text=None)
+    fig.update_xaxes(tickangle=-30, tickmode='linear', title_text=None)
+    fig.update_yaxes(title_text=None)
     
-    fig1.add_shape(type='line',
+    fig.add_shape(type='line',
                     x0=min_yr,
                     y0=mean_counts,
                     x1=max_yr,
@@ -50,12 +50,12 @@ def figure1(df_labor):
                     yref='y'
     )
 
-    fig1.update_layout({
+    fig.update_layout({
         'plot_bgcolor': 'rgba(0, 0, 0, 0)',
         'paper_bgcolor': 'rgba(0, 0, 0, 0)'
     })
 
-    fig1.update_layout(title={
+    fig.update_layout(title={
         'text': ('Labor Related Case Decisions Over Years'),
         'y': 0.95,
         'x': 0.5,
@@ -63,11 +63,11 @@ def figure1(df_labor):
         'yanchor': 'top'
     },
         showlegend=False)
-    fig1.show()
+    fig.show()
 
 
-def figure2(df_labor):
-    """Display figure2 for Lab4 report.
+def figure4(df_labor):
+    """Display figure4 for Lab4 report.
     
     Parameters
     ----------
@@ -94,7 +94,7 @@ def figure2(df_labor):
     # Removed Invalid Divisions
     df_donut = df_donut[~df_donut.division_.isin(['', '[SYLLABUS]'])]
 
-    fig2 = go.Figure(data=[
+    fig = go.Figure(data=[
         go.Pie(labels=df_donut["division_"],
                values=df_donut["counts"],
                hole=.5,
@@ -102,16 +102,16 @@ def figure2(df_labor):
                marker_colors=night_colors)
     ])
 
-    fig2.update_layout(
+    fig.update_layout(
         title="Supreme Court Division Distribution",
         title_x=0.5,
     )
-    fig2.show()
+    fig.show()
 
 
 
-def figure3(df_labor):
-    """Display figure3 for Lab4 report.
+def figure5(df_labor):
+    """Display figure5 for Lab4 report.
     
     Parameters
     ----------
@@ -126,7 +126,7 @@ def figure3(df_labor):
     dfplot = df.groupby('article').sum().sort_values(
         by='Count', ascending=False)
 
-    articles = (dfplot.iloc[:20, ].reset_index().rename(columns={
+    articles = (dfplot.iloc[:5, ].reset_index().rename(columns={
         'index': 'article',
         'Count': 'count'
     }))
