@@ -1,26 +1,26 @@
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from time import sleep
+from pathlib import Path
+from datetime import datetime
+import sqlite3
+from time import strptime
+import os
+import pickle
+from bs4 import BeautifulSoup
+import re
+from math import ceil
+import numpy as np
+import pandas as pd
+import time
+import requests
+import MySQLdb
 from tqdm import tqdm
 import pymysql
 import getpass
 from sqlalchemy import exc
 from sqlalchemy import create_engine
 pymysql.install_as_MySQLdb()
-import MySQLdb
-import requests
-import time
-import pandas as pd
-import numpy as np
-from math import ceil
-import re
-from bs4 import BeautifulSoup
-import pickle
-import os
-from time import strptime
-import sqlite3
-from datetime import datetime
-from pathlib import Path
 
-from time import sleep
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
@@ -34,13 +34,19 @@ password = 'Rocksalt1'
 
 
 def get_soup(url_):
+    """Return BeautifulSoup object from input url."""
     res = requests.get(url_,
-                       headers={'User-agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36'}, verify=False)
+                       headers={'User-agent':
+                                ('Mozilla/5.0 (Windows NT 6.1; WOW64) '
+                                 'AppleWebKit/537.36 (KHTML, like Gecko) '
+                                 'Chrome/47.0.2526.111 Safari/537.36')},
+                       verify=False)
     # print(res.content)
-    return BeautifulSoup(res.content, features = 'lxml', from_encoding='utf-8')
+    return BeautifulSoup(res.content, features='lxml', from_encoding='utf-8')
 
 
 def get_month_links(conn):
+    """Returns DataFrame of unprocessed SC month-year links"""
     who = getpass.getuser()
     query = f"""
         select * from months
@@ -61,7 +67,7 @@ def get_month_links(conn):
         month_urls = soup.find_all(href=True)
         month_urls = [e['href'] for e in month_urls]
         month_urls = [re.findall('.*docmonth.*', e)[0]
-                      for e in month_urls if re.findall('.*docmonth.*', e) != []]
+                    or e in month_urls if re.findall('.*docmonth.*', e) != []]
 
         def month_f(x): return strptime(x.split('/')[5], '%b').tm_mon
         def year_f(x): return x.split('/')[6]
@@ -90,6 +96,7 @@ def get_month_links(conn):
 
 
 def extract_cases(conn):
+    """Download SC cases to a html file."""
     months_df = get_month_links(conn)
     url = months_df.iloc[0, 0]
     # create output directory
@@ -119,8 +126,6 @@ def extract_cases(conn):
         with open(full_file, 'w+', encoding="utf-8") as f:
             f.write(get_soup(c_link).prettify())
 
-        
-
         out_dict = {
             'parent': url,
             'url': c_link,
@@ -132,8 +137,6 @@ def extract_cases(conn):
             'extract_by': getpass.getuser()
         }
         out_list.append(out_dict)
-    
-    
 
     df_sql = pd.DataFrame(out_list)
     df_sql.to_sql('cases', conn, index=False, if_exists='append')
@@ -144,15 +147,15 @@ def extract_cases(conn):
             where url = '{url}'
             """
     conn.execute(update_q)
-    
 
 
 def main():
+    """Execute extract_cases function."""
     engine = create_engine(
         f"mysql+mysqldb://{account}:{password}@{server}/{db}?charset=utf8mb4")
     conn = engine.connect().execution_options(autocommit=True)
 
     extract_cases(conn)
-    
+
     conn.invalidate()
     conn.close()

@@ -5,3 +5,4 @@ df_labor_code.pkl
 .vscode/settings.json
 scraper/__pycache__/sc_scrapper.cpython-37.pyc
 scrapper/__pycache__/sc_scrapper.cpython-37.pyc
+account.text
