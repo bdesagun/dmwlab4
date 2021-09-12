@@ -29,12 +29,26 @@ def figure1(df_labor):
 
     bar_colors = '#5F9EA0'
 
+    mean_counts = year_count_df['counts'].mean()
+    min_yr = min(year_count_df['year'])
+    max_yr = max(year_count_df['year'])    
+
     fig1 = px.bar(x=year_count_df["year"],
                   y=year_count_df["counts"],
                   color_discrete_sequence=[bar_colors])
 
     fig1.update_xaxes(tickangle=-30, tickmode='linear', title_text=None)
     fig1.update_yaxes(title_text=None)
+    
+    fig1.add_shape(type='line',
+                    x0=min_yr,
+                    y0=mean_counts,
+                    x1=max_yr,
+                    y1=mean_counts,
+                    line=dict(color='Red',),
+                    xref='x',
+                    yref='y'
+    )
 
     fig1.update_layout({
         'plot_bgcolor': 'rgba(0, 0, 0, 0)',
@@ -59,6 +73,11 @@ def figure2(df_labor):
     ----------
     df_labor : pd.DataFrame
     """
+    def change_div(
+        x): return 'DIVISION' if 'division' in x.lower() else 'EN BANC'
+    df_labor["Deciding division"] = df_labor["Deciding division"].\
+        apply(change_div)
+
     df_donut = pd.DataFrame(df_labor["Deciding division"].value_counts()).\
         reset_index()
     df_donut.rename({
